@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome,
   faUser,
-  faPills,
+  faBriefcase, // Updated icon for Services
   faCalendar,
   faCog,
   faSignOutAlt,
@@ -33,10 +33,10 @@ const NavBar = ({ activeSection, setActiveSection }) => {
   const navItems = [
     { name: 'Home', icon: faHome },
     { name: 'Veterinarians', icon: faUser },
-    { name: 'Medications', icon: faPills },
+    { name: 'Services', icon: faBriefcase }, // Updated item name and icon
     { name: 'Appointments', icon: faCalendar },
     { name: 'Adoption', icon: faHeart },
-    { name: 'Vet Records', icon: faClipboardList },
+    { name: 'My Pets', icon: faClipboardList }, // Updated item name
     { name: 'Settings', icon: faCog },
   ];
 

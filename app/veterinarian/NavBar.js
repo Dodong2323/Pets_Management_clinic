@@ -4,15 +4,14 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome,
-  faUser,
-  faPills,
-  faCalendar,
-  faCog,
-  faSignOutAlt,
   faDog,
   faPeopleArrows,
   faUserMd,
-  faChartBar
+  faBriefcase, // Update icon if needed
+  faCalendar,
+  faChartBar,
+  faCog,
+  faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -34,14 +33,17 @@ const NavBar = ({ activeSection, setActiveSection }) => {
   // Navigation items
   const navItems = [
     { name: 'Home', icon: faHome },
-    { name: 'Clients', icon: faUser },
-    { name: 'Medicine', icon: faPills },
-    { name: 'Schedules', icon: faCalendar },
+    { name: 'Pets', icon: faDog },
+    { name: 'Owners', icon: faPeopleArrows },
+    { name: 'Vets', icon: faUserMd },
+    { name: 'Services', icon: faBriefcase }, // Update this line
+    { name: 'Appointments', icon: faCalendar },
+    { name: 'Reports', icon: faChartBar },
     { name: 'Settings', icon: faCog },
   ];
 
   return (
-    <nav className="bg-[#405D72] text-white w-1/4 min-h-screen flex flex-col justify-between">
+    <nav className="bg-[#405D72] text-white w-1/4 min-h-screen flex flex-col">
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6 text-pink-600 flex items-center">
           <span role="img" aria-label="dog" className="text-3xl mr-2">🐶</span>
@@ -66,8 +68,8 @@ const NavBar = ({ activeSection, setActiveSection }) => {
         </ul>
       </div>
 
-      {/* Logout Button at the bottom */}
-      <div className="p-4">
+      {/* Logout button pushed to the bottom */}
+      <div className="mt-auto p-4">
         <button
           onClick={handleLogout}
           className="flex items-center space-x-3 px-6 py-3 bg-pink-600 hover:bg-pink-500 transition duration-300 rounded-lg w-full text-left"

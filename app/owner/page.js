@@ -1,14 +1,13 @@
 "use client"; // Ensure this is at the very top
 
-
 import React, { useState } from 'react';
 import NavBar from './NavBar';
 import HomeSection from './HomeSection';
-import VeterinariansSection from './/VeterinariansSection';
-import MedicationsSection from './MedicationsSection';
+import VeterinariansSection from './VeterinariansSection';
+import MedicationsSection from './ServicesSection';
 import AppointmentsSection from './AppointmentsSection';
 import AdoptionSection from './AdoptionSection';
-import VetRecordsSection from './VetRecordsSection';
+import MypetsSection from './MypetsSection'; // Updated import
 import SettingsSection from './SettingsSection';
 
 const OwnerPage = () => {
@@ -21,14 +20,14 @@ const OwnerPage = () => {
         return <HomeSection />;
       case 'Veterinarians':
         return <VeterinariansSection />;
-      case 'Medications':
+      case 'ServicesSection':
         return <MedicationsSection />;
       case 'Appointments':
         return <AppointmentsSection />;
       case 'Adoption':
         return <AdoptionSection />;
-      case 'Vet Records':
-        return <VetRecordsSection />;
+      case 'My Pets': // Updated case name
+        return <MypetsSection />; // Updated component
       case 'Settings':
         return <SettingsSection />;
       default:

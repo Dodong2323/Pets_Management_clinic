@@ -7,7 +7,7 @@ import {
   faDog,
   faPeopleArrows,
   faUserMd,
-  faPills,
+  faBriefcase, // Update icon if needed
   faCalendar,
   faChartBar,
   faCog,
@@ -36,7 +36,7 @@ const NavBar = ({ activeSection, setActiveSection }) => {
     { name: 'Pets', icon: faDog },
     { name: 'Owners', icon: faPeopleArrows },
     { name: 'Vets', icon: faUserMd },
-    { name: 'Medicines', icon: faPills },
+    { name: 'Services', icon: faBriefcase }, // Update this line
     { name: 'Appointments', icon: faCalendar },
     { name: 'Reports', icon: faChartBar },
     { name: 'Settings', icon: faCog },

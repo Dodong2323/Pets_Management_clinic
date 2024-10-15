@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import NavBar from './NavBar';
-import HomeSection from './sections/HomeSection';
-import PetsSection from './sections/PetsSection';
-import OwnersSection from './sections/OwnersSection';
-import VetsSection from './sections/VetsSection';
-import MedicinesSection from './sections/MedicinesSection';
-import AppointmentsSection from './sections/AppointmentsSection';
-import ReportsSection from './sections/ReportsSection';
-import SettingsSection from './sections/SettingsSection';
+import HomeSection from './HomeSection';
+import PetsSection from './PetsSection';
+import OwnersSection from './ClientsSection';
+import VetsSection from './VetsSection';
+import AppointmentsSection from './AppointmentsSection';
+import ReportsSection from './ReportsSection';
+import SettingsSection from './SettingsSection';
+import ServicesSection from './ServicesSection';
 
-const AdminPage = () => {
+const VeterinarianPage = () => {
   const [activeSection, setActiveSection] = useState('Home'); // State to manage active section
 
   // Function to render the active section content
@@ -25,8 +25,8 @@ const AdminPage = () => {
         return <OwnersSection />;
       case 'Vets':
         return <VetsSection />;
-      case 'Medicines':
-        return <MedicinesSection />;
+      case 'Services':
+        return <ServicesSection />;
       case 'Appointments':
         return <AppointmentsSection />;
       case 'Reports':
@@ -57,4 +57,4 @@ const AdminPage = () => {
   );
 };
 
-export default AdminPage;
+export default VeterinarianPage;

@@ -1,4 +1,4 @@
-"use client"; // Ensure this is at the very top
+"use client";
 
 import React, { useState } from 'react';
 import NavBar from './NavBar';
@@ -6,11 +6,10 @@ import HomeSection from './HomeSection';
 import PetsSection from './PetsSection';
 import OwnersSection from './OwnersSection';
 import VetsSection from './VetsSection';
-import MedicinesSection from './MedicinesSection';
+import ServicesSection from './ServicesSection'; // Update this line
 import AppointmentsSection from './AppointmentsSection';
 import ReportsSection from './ReportsSection';
 import SettingsSection from './SettingsSection';
-
 
 const AdminPage = () => {
   const [activeSection, setActiveSection] = useState('Home'); // State to manage active section
@@ -26,8 +25,8 @@ const AdminPage = () => {
         return <OwnersSection />;
       case 'Vets':
         return <VetsSection />;
-      case 'Medicines':
-        return <MedicinesSection />;
+      case 'Services': // Update this line
+        return <ServicesSection />; // Update this line
       case 'Appointments':
         return <AppointmentsSection />;
       case 'Reports':
