@@ -19,40 +19,34 @@ const PetsSection = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [adoptionModalOpen, setAdoptionModalOpen] = useState(false);
-  const [selectedPet, setSelectedPet] = useState(null);
   const [filteredPets, setFilteredPets] = useState([]);
+  const [isEditing, setIsEditing] = useState(false); // New state for editing
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
         setLoading(true);
-        const url = secureLocalStorage.get('url', 'http://localhost/pet_management_system/api/pets.php');
-        
-        // Fetch species, breeds, and owners in parallel
-        const [speciesRes, breedsRes, ownersRes] = await Promise.all([
-          axios.post(url, new FormData().append('operation', 'getSpeciesDetails')),
-          axios.post(url, new FormData().append('operation', 'getBreedDetails')),
-          axios.post(url, new FormData().append('operation', 'getOwnersDetails')) // New API call for owners
-        ]);
-
-        console.log('Species Response:', speciesRes.data); // Log species response
-        console.log('Breeds Response:', breedsRes.data);   // Log breeds response
-        console.log('Owners Response:', ownersRes.data);   // Log owners response
-
-        setSpecies(speciesRes.data);
-        setBreeds(breedsRes.data);
-        setOwners(ownersRes.data);
-
+        const url = secureLocalStorage.getItem('url') + "pets.php";
+        const formData = new FormData();
+        formData.append("operation", "getalldetails");
+        const response = await axios.post(url, formData);
+        const res = response.data;
+        console.log("fetchDetails", res);
+        setSpecies(res.getSpeciesDetails);
+        setBreeds(res.getBreedDetails);
+        setOwners(res.getOwnerDetails);
         toast.success('Data fetched successfully!', { duration: 1200 });
       } catch (error) {
         console.error('Error fetching details:', error);
+        toast.error('Error fetching details');
         setError('Error fetching details');
       } finally {
         setLoading(false);
       }
     };
 
+    secureLocalStorage.setItem('url', 'http://localhost/pet_management_system/api/');
+    fetchPets();
     fetchDetails();
   }, []);
 
@@ -64,77 +58,93 @@ const PetsSection = () => {
     });
   };
 
-  const openModal = () => {
-    resetForm();
-    setModalOpen(true);
-  };
-
-  const editPet = (pet) => {
-    setFormData({
-      pet_id: pet.pet_id,
-      pet_name: pet.pet_name,
-      species_id: pet.species_id,
-      breed_id: pet.breed_id,
-      date_of_birth: pet.date_of_birth,
-      owner_id: pet.owner_id,
-    });
+  const openModal = (pet = null) => {
+    if (pet) {
+      // If a pet is passed, set form data and set editing mode
+      setFormData({
+        pet_id: pet.pet_id,
+        pet_name: pet.pet_name,
+        species_id: pet.species_id,
+        breed_id: pet.breed_id,
+        date_of_birth: pet.date_of_birth,
+        owner_id: pet.owner_id,
+      });
+      setIsEditing(true); // Set editing mode
+    } else {
+      resetForm();
+      setIsEditing(false); // Not editing
+    }
     setModalOpen(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const url = secureLocalStorage.getItem('url', 'http://localhost/pet_management_system/api/pets.php');
-      const operation = formData.pet_id ? 'updatePets' : 'addPets';
-      const res = await axios.post(url, {
-        operation,
-        ...formData,
-      });
+    setLoading(true);
+    const loadingToast = toast.loading(isEditing ? 'Updating pet...' : 'Adding pet...');
 
-      console.log('Submit Response:', res.data); // Log submit response
+    try {
+      const url = secureLocalStorage.getItem('url') + "pets.php";
+
+      const petData = {
+        pet_name: formData.pet_name,
+        species_id: formData.species_id,
+        breed_id: formData.breed_id,
+        date_of_birth: formData.date_of_birth,
+        owner_id: formData.owner_id,
+        pet_id: isEditing ? formData.pet_id : undefined, // Include pet_id only if editing
+      };
+
+      console.log("petData to be sent:", JSON.stringify(petData));
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('json', JSON.stringify(petData));
+      formDataToSend.append('operation', isEditing ? 'updatePets' : 'addPets'); // Change operation based on editing mode
+
+      const res = await axios.post(url, formDataToSend);
+      toast.dismiss(loadingToast);
+
+      console.log('Backend Response:', res.data);
 
       if (res.data > 0) {
-        toast.success(`Pet ${operation === 'addPets' ? 'added' : 'updated'} successfully!`, { duration: 1200 });
-        resetForm();
+        toast.success(isEditing ? 'Pet updated successfully!' : 'Pet added successfully!');
         setModalOpen(false);
-        fetchPets(); // Call to refresh pet list after addition or update
+        fetchPets();
       } else {
-        toast.error('Failed to save pet!', { duration: 1200 });
+        toast.error("Failed to " + (isEditing ? "update" : "add") + " pet!");
+        console.log("Response Data: ", JSON.stringify(res.data));
       }
+
     } catch (error) {
-      console.error('Error submitting pet data:', error);
-      toast.error('Error submitting pet data', { duration: 1200 });
+      toast.error("Network error!", { description: error.message });
+      console.error('Error adding/updating pet:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchPets = async () => {
     try {
-      const url = secureLocalStorage.getItem('url', 'http://localhost/pet_management_system/api/pets.php');
-      const res = await axios.post(url, new FormData().append('operation', 'getPetsDetails'));
-
-      console.log('Fetch Pets Response:', res.data); // Log fetch pets response
-
+      const url = secureLocalStorage.getItem('url') + "pets.php";
+      const formData = new FormData();
+      formData.append("operation", "getPetDetails");
+      console.log("Fetching pets from URL:", url);
+      const res = await axios.post(url, formData);
+      console.log('Fetch Pets Response:', res.data);
       setFilteredPets(res.data);
     } catch (error) {
       console.error('Error fetching pets:', error);
     }
   };
 
-  const handleAdoption = () => {
-    // Implement adoption logic here, possibly making an API call
-    setAdoptionModalOpen(false);
-  };
-
   const deletePet = async (petId) => {
     try {
-      const url = secureLocalStorage.getItem('url', 'http://localhost/pet_management_system/api/pets.php');
+      const url = secureLocalStorage.getItem('url') + "pets.php";
       const res = await axios.post(url, new FormData().append('operation', 'deletePet').append('pet_id', petId));
-
-      console.log('Delete Response:', res.data); // Log delete response
+      console.log('Delete Response:', res.data);
 
       if (res.data > 0) {
         toast.success('Pet deleted successfully!', { duration: 1200 });
-        fetchPets(); // Refresh pets list after deletion
+        fetchPets();
       } else {
         toast.error('Failed to delete pet!', { duration: 1200 });
       }
@@ -142,11 +152,6 @@ const PetsSection = () => {
       console.error('Error deleting pet:', error);
       toast.error('Error deleting pet', { duration: 1200 });
     }
-  };
-
-  const openAdoptionModal = (pet) => {
-    setSelectedPet(pet);
-    setAdoptionModalOpen(true);
   };
 
   const resetForm = () => {
@@ -165,7 +170,7 @@ const PetsSection = () => {
       <h1 className="text-3xl font-semibold mb-4">Pet Management</h1>
       <div className="flex justify-between mb-4">
         <button
-          onClick={openModal}
+          onClick={() => openModal()} // Open modal for adding pet
           className="bg-[#405D72] text-white px-4 py-2 rounded hover:bg-[#334e63] transition"
         >
           Add Pet
@@ -187,18 +192,18 @@ const PetsSection = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredPets.length > 0 ? (
+          {filteredPets && filteredPets.length > 0 ? (
             filteredPets.map((pet) => (
               <tr key={pet.pet_id}>
                 <td className="border border-gray-300 p-2">{pet.pet_name}</td>
                 <td className="border border-gray-300 p-2">{pet.species_name}</td>
                 <td className="border border-gray-300 p-2">{pet.breed_name}</td>
-                <td className="border border-gray-300 p-2">{pet.owner_name}</td>
+                <td className="border border-gray-300 p-2">{pet.FullName}</td>
                 <td className="border border-gray-300 p-2">{pet.pet_status}</td>
                 <td className="border border-gray-300 p-2">
                   <button
-                    onClick={() => editPet(pet)}
-                    className="text-blue-600 hover:underline"
+                    onClick={() => openModal(pet)} // Pass pet data to modal for editing
+                    className="text-blue-600 hover:underline ml-2"
                   >
                     Edit
                   </button>
@@ -207,12 +212,6 @@ const PetsSection = () => {
                     className="text-red-600 hover:underline ml-2"
                   >
                     Delete
-                  </button>
-                  <button
-                    onClick={() => openAdoptionModal(pet)}
-                    className="text-green-600 hover:underline ml-2"
-                  >
-                    Adopt
                   </button>
                 </td>
               </tr>
@@ -231,51 +230,43 @@ const PetsSection = () => {
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-2xl font-semibold mb-4">
-              {formData.pet_id ? 'Edit Pet' : 'Add Pet'}
-            </h2>
+            <h2 className="text-2xl font-semibold mb-4">{isEditing ? 'Edit Pet' : 'Add Pet'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block mb-2" htmlFor="pet_name">
-                  Pet Name
-                </label>
+                <label htmlFor="pet_name" className="block text-sm font-medium mb-2">Pet Name</label>
                 <input
-                  className="border border-gray-300 p-2 w-full"
                   type="text"
                   name="pet_name"
                   value={formData.pet_name}
                   onChange={handleInputChange}
+                  className="border border-gray-300 p-2 rounded w-full"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block mb-2" htmlFor="species_id">
-                  Species
-                </label>
+                <label htmlFor="species_id" className="block text-sm font-medium mb-2">Species</label>
                 <select
-                  className="border border-gray-300 p-2 w-full"
                   name="species_id"
                   value={formData.species_id}
                   onChange={handleInputChange}
+                  className="border border-gray-300 p-2 rounded w-full"
                   required
                 >
                   <option value="">Select Species</option>
-                  {species.map((species) => (
-                    <option key={species.species_id} value={species.species_id}>
-                      {species.species_name}
+                  {species.map((spec) => (
+                    <option key={spec.species_id} value={spec.species_id}>
+                      {spec.species_name}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block mb-2" htmlFor="breed_id">
-                  Breed
-                </label>
+                <label htmlFor="breed_id" className="block text-sm font-medium mb-2">Breed</label>
                 <select
-                  className="border border-gray-300 p-2 w-full"
                   name="breed_id"
                   value={formData.breed_id}
                   onChange={handleInputChange}
+                  className="border border-gray-300 p-2 rounded w-full"
                   required
                 >
                   <option value="">Select Breed</option>
@@ -286,48 +277,45 @@ const PetsSection = () => {
                   ))}
                 </select>
               </div>
+              
               <div className="mb-4">
-                <label className="block mb-2" htmlFor="owner_id">
-                  Owner
-                </label>
+                <label htmlFor="date_of_birth" className="block text-sm font-medium mb-2">Date of Birth</label>
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  value={formData.date_of_birth}
+                  onChange={handleInputChange}
+                  className="border border-gray-300 p-2 rounded w-full"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="owner_id" className="block text-sm font-medium mb-2">Owner</label>
                 <select
-                  className="border border-gray-300 p-2 w-full"
                   name="owner_id"
                   value={formData.owner_id}
                   onChange={handleInputChange}
+                  className="border border-gray-300 p-2 rounded w-full"
                   required
                 >
                   <option value="">Select Owner</option>
                   {owners.map((owner) => (
                     <option key={owner.owner_id} value={owner.owner_id}>
-                      {owner.owner_name}
+                      {owner.FullName}
                     </option>
                   ))}
                 </select>
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2" htmlFor="date_of_birth">
-                  Date of Birth
-                </label>
-                <input
-                  className="border border-gray-300 p-2 w-full"
-                  type="date"
-                  name="date_of_birth"
-                  value={formData.date_of_birth}
-                  onChange={handleInputChange}
-                  required
-                />
               </div>
               <button
                 type="submit"
                 className="bg-[#405D72] text-white px-4 py-2 rounded hover:bg-[#334e63] transition"
               >
-                {formData.pet_id ? 'Update Pet' : 'Add Pet'}
+                {isEditing ? 'Update Pet' : 'Add Pet'}
               </button>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="bg-red-500 text-white px-4 py-2 rounded ml-2 hover:bg-red-600 transition"
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition ml-2"
               >
                 Cancel
               </button>

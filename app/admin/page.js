@@ -10,6 +10,7 @@ import ServicesSection from './ServicesSection'; // Update this line
 import AppointmentsSection from './AppointmentsSection';
 import ReportsSection from './ReportsSection';
 import SettingsSection from './SettingsSection';
+import AdoptionSection from './AdoptionSection';
 
 const AdminPage = () => {
   const [activeSection, setActiveSection] = useState('Home'); // State to manage active section
@@ -33,6 +34,8 @@ const AdminPage = () => {
         return <ReportsSection />;
       case 'Settings':
         return <SettingsSection />;
+      case 'Adoption':
+        return <AdoptionSection />;
       default:
         return null;
     }
