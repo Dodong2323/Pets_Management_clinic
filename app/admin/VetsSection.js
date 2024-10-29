@@ -32,6 +32,7 @@ const VetsSection = () => {
       const formData = new FormData();
       formData.append("operation", "listVeterinarians");
       const res = await axios.post(url, formData);
+      console.log("Fetch Veterinarians Response:", res.data);
       if (res.data !== 0 && Array.isArray(res.data)) {
         const mappedVets = res.data.map(mapVetData);
         setVets(mappedVets);
@@ -194,7 +195,7 @@ const VetsSection = () => {
               filteredVets.map((vet, index) => {
                 const user = users.find(u => u.user_id === vet.user_id) || {};
                 return (
-                  <tr key={index} className="hover:bg-gray-100">
+                  <tr key={index} value={vet.vet_id} className="hover:bg-gray-100">
                     <td className="border px-4 py-2">{user.first_name} {user.last_name}</td>
                     <td className="border px-4 py-2">{vet.license_number}</td>
                     <td className="border px-4 py-2">{vet.specialization}</td>

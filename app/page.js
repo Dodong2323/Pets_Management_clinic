@@ -64,10 +64,11 @@ const AuthForm = () => {
         
         // Store user data
         secureLocalStorage.setItem("isLoggedIn", "true");
+        // const userId = secureLocalStorage.getItem("userId");
         secureLocalStorage.setItem("userId", data.UserID);
         secureLocalStorage.setItem("username", data.Username);
         secureLocalStorage.setItem("role", data.user_level);
-
+        
         // Route based on user_level
         setTimeout(() => {
           switch (parseInt(data.user_level)) {

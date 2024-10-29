@@ -195,6 +195,45 @@ const AdoptionSection = () => {
     }
   };
 
+  const handleAddPet = async (e) => {
+    e.preventDefault();
+    try {
+      const url = secureLocalStorage.getItem('url') + "petAdoption.php";
+      const formData = new FormData();
+      formData.append('operation', 'addPetAdoption');
+      formData.append('json', JSON.stringify({
+        ...newPet,
+        CreatedAt: new Date().toISOString(),
+        UpdatedAt: new Date().toISOString()
+      }));
+      
+      console.log('Sending data:', newPet);
+      
+      const res = await axios.post(url, formData);
+      console.log('Server response:', res.data);
+      
+      if (res.data === 1) {
+        alert('Pet added successfully for adoption');
+        setModalOpen(false);
+        fetchPets(); // Refresh the pets list
+        setNewPet({ // Reset the form
+          petName: '',
+          species_id: '',
+          breed_id: '',
+          age: '',
+          gender: '',
+          colour: '',
+          description: ''
+        });
+      } else {
+        alert('Failed to add pet for adoption');
+      }
+    } catch (error) {
+      console.error('Error adding pet for adoption:', error);
+      alert('Error adding pet for adoption: ' + error.message);
+    }
+  };
+
   if (loading) return <p>Loading pets...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -210,111 +249,84 @@ const AdoptionSection = () => {
         )}
       </div>
 
-      {/* Pending Adoption Requests Section */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-4">Pending Adoption Requests</h3>
-        {adoptionRequests.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="py-2 px-4 border-b text-left">Pet ID</th>
-                  <th className="py-2 px-4 border-b text-left">User ID</th>
-                  <th className="py-2 px-4 border-b text-left">Shelter</th>
-                  <th className="py-2 px-4 border-b text-left">Reason</th>
-                  <th className="py-2 px-4 border-b text-left">Status</th>
-                  <th className="py-2 px-4 border-b text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {adoptionRequests.map((request) => (
-                  <tr key={request.AdoptionID} className="hover:bg-gray-50">
-                    <td className="py-2 px-4 border-b">{request.petId}</td>
-                    <td className="py-2 px-4 border-b">{request.UserID}</td>
-                    <td className="py-2 px-4 border-b">{request.Shelter || 'N/A'}</td>
-                    <td className="py-2 px-4 border-b">{request.Reason}</td>
-                    <td className="py-2 px-4 border-b">{request.Status}</td>
-                    <td className="py-2 px-4 border-b">
-                      <button
-                        onClick={() => handleApprove(request.AdoptionID)}
-                        className="bg-green-500 text-white py-1 px-2 rounded mr-2 hover:bg-green-600 transition duration-300"
-                      >
-                        <FontAwesomeIcon icon={faCheck} className="mr-1" /> Approve
-                      </button>
-                      <button
-                        onClick={() => handleReview(request.AdoptionID)}
-                        className="bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600 transition duration-300"
-                      >
-                        <FontAwesomeIcon icon={faSearch} className="mr-1" /> Review
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>No pending adoption requests at the moment.</p>
-        )}
-      </div>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Pending Adoption Requests Section */}
+        <div className="lg:w-1/2">
+          <h3 className="text-xl font-semibold mb-4">Pending Adoption Requests</h3>
+          {adoptionRequests.length > 0 ? (
+            <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+              {adoptionRequests.map((request) => (
+                <div key={request.AdoptionID} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
+                  <p><span className="font-semibold">Pet ID:</span> {request.petId}</p>
+                  <p><span className="font-semibold">User ID:</span> {request.UserID}</p>
+                  <p><span className="font-semibold">Shelter:</span> {request.Shelter || 'N/A'}</p>
+                  <p><span className="font-semibold">Reason:</span> {request.Reason}</p>
+                  <p><span className="font-semibold">Status:</span> {request.Status}</p>
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <button
+                      onClick={() => handleApprove(request.AdoptionID)}
+                      className="bg-green-500 text-white py-1 px-2 rounded hover:bg-green-600 transition duration-300"
+                    >
+                      <FontAwesomeIcon icon={faCheck} className="mr-1" /> Approve
+                    </button>
+                    <button
+                      onClick={() => handleReview(request.AdoptionID)}
+                      className="bg-yellow-500 text-white py-1 px-2 rounded hover:bg-yellow-600 transition duration-300"
+                    >
+                      <FontAwesomeIcon icon={faSearch} className="mr-1" /> Review
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No pending adoption requests at the moment.</p>
+          )}
+        </div>
 
-      {/* Existing Pets for Adoption Section */}
-      <h3 className="text-xl font-semibold mb-4">Pets Available for Adoption</h3>
-      <button 
-        onClick={() => setModalOpen(true)}
-        className="mb-4 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-300"
-      >
-        Add New Pet for Adoption
-      </button>
-      {pets.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="py-2 px-4 border-b text-left">Pet Name</th>
-                <th className="py-2 px-4 border-b text-left">Species</th>
-                <th className="py-2 px-4 border-b text-left">Breed</th>
-                <th className="py-2 px-4 border-b text-left">Age</th>
-                <th className="py-2 px-4 border-b text-left">Gender</th>
-                <th className="py-2 px-4 border-b text-left">Color</th>
-                <th className="py-2 px-4 border-b text-left">Description</th>
-                <th className="py-2 px-4 border-b text-left">Status</th>
-                <th className="py-2 px-4 border-b text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        {/* Existing Pets for Adoption Section */}
+        <div className="lg:w-1/2">
+          <h3 className="text-xl font-semibold mb-4">Pets Available for Adoption</h3>
+          <button 
+            onClick={() => setModalOpen(true)}
+            className="mb-4 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-300"
+          >
+            Add New Pet for Adoption
+          </button>
+          {pets.length > 0 ? (
+            <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
               {pets.map((pet) => (
-                <tr key={pet.petId} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border-b">{pet.petName || 'Unnamed Pet'}</td>
-                  <td className="py-2 px-4 border-b">{pet.species_name || 'Unknown'}</td>
-                  <td className="py-2 px-4 border-b">{pet.breed_name || 'Unknown'}</td>
-                  <td className="py-2 px-4 border-b">{pet.age || 'Unknown'}</td>
-                  <td className="py-2 px-4 border-b">{pet.gender || 'Unknown'}</td>
-                  <td className="py-2 px-4 border-b">{pet.colour || 'Unknown'}</td>
-                  <td className="py-2 px-4 border-b">{pet.description || 'No description'}</td>
-                  <td className="py-2 px-4 border-b">{pet.status || 'Unknown'}</td>
-                  <td className="py-2 px-4 border-b">
-                    <button className="bg-blue-500 text-white py-1 px-2 rounded mr-2 hover:bg-blue-600 transition duration-300">
+                <div key={pet.petId} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
+                  <h4 className="font-semibold text-lg mb-2">{pet.petName || 'Unnamed Pet'}</h4>
+                  <p><span className="font-semibold">Species:</span> {pet.species_name || 'Unknown'}</p>
+                  <p><span className="font-semibold">Breed:</span> {pet.breed_name || 'Unknown'}</p>
+                  <p><span className="font-semibold">Age:</span> {pet.age || 'Unknown'}</p>
+                  <p><span className="font-semibold">Gender:</span> {pet.gender || 'Unknown'}</p>
+                  <p><span className="font-semibold">Color:</span> {pet.colour || 'Unknown'}</p>
+                  <p><span className="font-semibold">Description:</span> {pet.description || 'No description'}</p>
+                  <p><span className="font-semibold">Status:</span> {pet.status || 'Unknown'}</p>
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <button className="bg-blue-500 text-white py-1 px-2 rounded hover:bg-blue-600 transition duration-300">
                       Edit
                     </button>
                     <button className="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600 transition duration-300">
                       Delete
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <p>No pets available for adoption at the moment.</p>
+          )}
         </div>
-      ) : (
-        <p>No pets available for adoption at the moment.</p>
-      )}
+      </div>
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg w-96">
             <h3 className="text-xl font-semibold mb-4">Add New Pet for Adoption</h3>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleAddPet}>
               <input
                 type="text"
                 name="petName"

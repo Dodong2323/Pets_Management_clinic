@@ -4,18 +4,16 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import secureLocalStorage from 'react-secure-storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faHeart, faHome, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faPaw, faHeart, faHome } from '@fortawesome/free-solid-svg-icons';
 
 const AdoptionSection = () => {
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [pendingAdoptions, setPendingAdoptions] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
   const [adoptionReason, setAdoptionReason] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const petsPerPage = 6; // Adjust this number as needed
+  const [pendingAdoptions, setPendingAdoptions] = useState(0);
 
   useEffect(() => {
     fetchPets();
@@ -57,7 +55,6 @@ const AdoptionSection = () => {
     try {
       const url = secureLocalStorage.getItem('url') + "adoptions.php";
       const userId = secureLocalStorage.getItem('userId');
-      console.log('User ID:', userId);
 
       if (!userId) {
         throw new Error('User ID not found. Please log in again.');
@@ -67,19 +64,15 @@ const AdoptionSection = () => {
         petId: selectedPet.petId,
         UserID: userId,
         Status: 'Pending',
-        Reason: adoptionReason
+        Reason: adoptionReason,
+        ReleaseStatus_id: 1  // Add this line, assuming 1 is a valid ReleaseStatus_id
       };
-
-      console.log('Adoption data:', adoptionData);
 
       const formData = new FormData();
       formData.append('operation', 'requestAdoption');
       formData.append('json', JSON.stringify(adoptionData));
 
-      console.log('Sending adoption request:', adoptionData);
-
       const res = await axios.post(url, formData);
-      console.log('Server response:', res.data);
 
       if (res.data === 1) {
         alert('Adoption request submitted successfully!');
@@ -94,31 +87,13 @@ const AdoptionSection = () => {
     }
   };
 
-  // Get current pets
-  const indexOfLastPet = currentPage * petsPerPage;
-  const indexOfFirstPet = indexOfLastPet - petsPerPage;
-  const currentPets = pets.slice(indexOfFirstPet, indexOfLastPet);
-
-  // Change page
-  const nextPage = () => {
-    if (currentPage < Math.ceil(pets.length / petsPerPage)) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
   return (
     <div className="space-y-6 relative">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold text-gray-800">Pets for Adoption</h2>
         {pendingAdoptions > 0 && (
           <div className="flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
-            <FontAwesomeIcon icon={faBell} className="mr-2" />
+            <FontAwesomeIcon icon={faPaw} className="mr-2" />
             <span>{pendingAdoptions} pending adoption{pendingAdoptions > 1 ? 's' : ''}</span>
           </div>
         )}
@@ -127,32 +102,14 @@ const AdoptionSection = () => {
         <p className="text-center text-gray-600">Loading pets...</p>
       ) : error ? (
         <p className="text-center text-red-500">{error}</p>
-      ) : currentPets.length > 0 ? (
+      ) : pets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentPets.map((pet) => (
+          {pets.map((pet) => (
             <PetCard key={pet.petId} pet={pet} onAdopt={handleAdoptClick} />
           ))}
         </div>
       ) : (
         <p className="text-center text-gray-600">No pets available for adoption at the moment.</p>
-      )}
-
-      {/* Navigation buttons */}
-      {currentPage < Math.ceil(pets.length / petsPerPage) && (
-        <button 
-          onClick={nextPage}
-          className="absolute top-0 right-0 px-3 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white transition duration-300"
-        >
-          <FontAwesomeIcon icon={faChevronRight} />
-        </button>
-      )}
-      {currentPage > 1 && (
-        <button 
-          onClick={prevPage}
-          className="absolute bottom-0 left-0 px-3 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white transition duration-300"
-        >
-          <FontAwesomeIcon icon={faChevronLeft} />
-        </button>
       )}
 
       {/* Adoption Modal */}

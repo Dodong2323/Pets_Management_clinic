@@ -15,6 +15,7 @@ import {
   faBars,
   faTimes,
   faHeart,
+  faHistory,
 } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -44,6 +45,7 @@ const NavBar = ({ activeSection, setActiveSection }) => {
     { name: 'Appointments', icon: faCalendar },
     { name: 'Reports', icon: faChartBar },
     { name: 'Adoption', icon: faHeart },
+    { name: 'History', icon: faHistory },
     { name: 'Settings', icon: faCog },
   ];
 

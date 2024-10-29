@@ -1,262 +1,248 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import secureLocalStorage from 'react-secure-storage';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const AppointmentsSection = () => {
-  const [appointments, setAppointments] = useState([]); // State to hold appointments
-  const [owners, setOwners] = useState([]); // State to hold owners
-  const [pets, setPets] = useState([]); // State to hold pets
-  const [selectedOwner, setSelectedOwner] = useState(''); // State to track selected owner
+  const [appointments, setAppointments] = useState([]);
+  const [pets, setPets] = useState([]);
+  const [services, setServices] = useState([]);
   const [newAppointment, setNewAppointment] = useState({
-    client: '',
-    pet: '',
-    vet: '',
-    service: '',
-    time: '',
-    date: '',
-    reason: '',
+    pet_id: '',
+    ServiceID: '',
+    AppointmentDate: '',
+    AppointmentTime: '',
+    ReasonForVisit: '',
+    Status: 'Pending'
   });
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch appointments on component mount
-    const fetchAppointments = async () => {
-      try {
-        const url = 'http://localhost/pet_management_system/api/appointments.php';
-        const formData = new FormData();
-        formData.append('operation', 'listAppointments');
-        const res = await axios.post(url, formData)
-        console.log("response sa fetch appointment:", res.data);
-        if (res.data !== 0) {
-          setAppointments(res.data);
-        } else {
-          setAppointments([]);
-        }
-      } catch (error) {
-        console.error('Error fetching appointments:', error);
-      }
-    };
-
-    // Fetch owners for dropdown
-    const fetchOwners = async () => {
-      try {
-        const url = 'http://localhost/pet_management_system/api/owners.php';
-        const formData = new FormData();
-        formData.append("operation", "listOwners")
-        const response = await axios.post(url, formData);
-        console.log("Owners response:", response.data);
-        if (response.data !== 0) {
-          setOwners(response.data); // Update owners state
-        } else {
-          console.error('Error fetching owners:', response.data.message);
-        }
-      } catch (error) {
-        console.error('Error fetching owners:', error);
-      }
-    };
-
-    fetchAppointments(); // Call fetch appointments
-    fetchOwners(); // Call fetch owners
+    fetchAppointments();
+    fetchPets();
+    fetchServices();
   }, []);
 
-  // Fetch pets based on selected owner
-  const fetchPets = async (ownerId) => {
+  const fetchAppointments = async () => {
     try {
-      const url = 'http://localhost/pet_management_system/api/appointments.php';
-      const jsonData = { owner_id: ownerId }
-      const formData = new FormData();
-      formData.append('operation', 'getOwnerPetDetails');
-      formData.append('json', JSON.stringify(jsonData));
-      const response = await axios.post(url, formData);
-      if (response.data !== 0) {
-        setPets(response.data);
-      } else {
-        console.error('Error fetching pets:', response.data.message);
+      const jsonData = {
+        UserID: secureLocalStorage.getItem('userId')
       }
+      const url = secureLocalStorage.getItem('url') + "appointments.php";
+      const formData = new FormData();
+      formData.append('operation', 'getAppointmentByUser');
+      formData.append('json', JSON.stringify(jsonData));
+      const res = await axios.post(url, formData);
+      setAppointments(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
-      console.error('Error fetching pets:', error.response ? error.response.data : error.message);
+      console.error('Error fetching appointments:', error);
+      setAppointments([]);
     }
   };
 
-  const handleOwnerChange = (e) => {
-    const ownerId = e.target.value;
-    setSelectedOwner(ownerId);
-    setNewAppointment((prev) => ({ ...prev, client: ownerId })); // Set client in newAppointment
-    fetchPets(ownerId); // Fetch pets for the selected owner
+  const fetchPets = async () => {
+    try {
+      const url = secureLocalStorage.getItem('url') + "pets.php";
+      const formData = new FormData();
+      formData.append('operation', 'ownerpets');
+      formData.append('UserID', secureLocalStorage.getItem('userId'));
+      const res = await axios.post(url, formData);
+      setPets(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error('Error fetching pets:', error);
+      setPets([]);
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const url = secureLocalStorage.getItem('url') + "services.php";
+      const formData = new FormData();
+      formData.append('operation', 'getServiceDetails');
+      const res = await axios.post(url, formData);
+      setServices(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      setServices([]);
+    }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewAppointment((prev) => ({ ...prev, [name]: value }));
+    setNewAppointment(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const submitAppointment = async (e) => {
     e.preventDefault();
     try {
-      const url = 'http://localhost/pet_management_system/api/appointments.php';
-      const jsonData = {
-        pet_id: newAppointment.pet,
-        owner_id: newAppointment.client,
-        vet_id: newAppointment.vet,
-        ServiceID: newAppointment.service,
-        AppointmentDate: newAppointment.date,
-        AppointmentTime: newAppointment.time,
-        ReasonForVisit: newAppointment.reason
+      const url = secureLocalStorage.getItem('url') + "appointments.php";
+      const appointmentData = {
+        ...newAppointment,
+        UserID: secureLocalStorage.getItem('userId'),
+        vet_id: null // This will be assigned by the admin later
       };
+      console.log('Appointment data being sent:', appointmentData);
+  
       const formData = new FormData();
-      formData.append('operation', 'addAppointment');
-      formData.append('json', JSON.stringify(jsonData));
-      const response = await axios.post(url, formData);
+      formData.append('operation', 'createAppointment');
+      formData.append('json', JSON.stringify(appointmentData));
+  
+      console.log('FormData being sent:', Object.fromEntries(formData));
+  
+      const res = await axios.post(url, formData);
+      console.log('Server response:', res);
+  
+      if (res.data === 1) {
+        alert('Appointment request submitted successfully! Waiting for admin approval.');
+        fetchAppointments();
+        setNewAppointment({
+          pet_id: '',
+          ServiceID: '',
+          AppointmentDate: '',
+          AppointmentTime: '',
+          ReasonForVisit: '',
+          Status: 'Pending'
+        });
+        setModalOpen(false);
+      } else {
+        console.error('Server response indicates failure:', res.data);
+        alert('Failed to submit appointment request. Server response: ' + JSON.stringify(res.data));
+      }
     } catch (error) {
-      console.error('Error creating appointment:', error);
+      console.error('Error submitting appointment request:', error);
+      console.error('Error response:', error.response);
+      alert('An error occurred. Please try again. Error: ' + error.message);
     }
-    setIsModalOpen(false); // Close modal
-    setNewAppointment({ client: '', pet: '', vet: '', service: '', time: '', date: '' }); // Reset form
   };
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-semibold text-[#405D72] mb-6">Admin - Appointment Schedule</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-gray-800">My Appointments</h2>
+        <button
+          onClick={() => setModalOpen(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300 flex items-center"
+        >
+          <FontAwesomeIcon icon={faPlus} className="mr-2" />
+          Request Appointment
+        </button>
+      </div>
 
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Scheduled Appointments</h3>
-        <table className="min-w-full table-auto bg-white rounded-lg shadow">
-          <thead>
-            <tr className="bg-gray-200 text-left">
-              <th className="px-4 py-2">Client</th>
-              <th className="px-4 py-2">Pet</th>
-              <th className="px-4 py-2">Vet</th>
-              <th className="px-4 py-2">Service</th>
-              <th className="px-4 py-2">Time</th>
-              <th className="px-4 py-2">Actions</th>
+      {/* Appointments List */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pet</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vet</th>
             </tr>
           </thead>
-          <tbody>
-            {appointments.length > 0 ? ( // Check if appointments array is not empty
-              appointments.map((appointment) => (
-                <tr key={appointment.id} className="border-b">
-                  <td className="px-4 py-2">{appointment.First_name + ' ' + appointment.Last_name}</td>
-                  <td className="px-4 py-2">{appointment.pet_name}</td>
-                  <td className="px-4 py-2">{appointment.user_firstname + ' ' + appointment.user_lastname}</td>
-                  <td className="px-4 py-2">{appointment.ServiceName}</td>
-                  <td className="px-4 py-2">{appointment.AppointmentDate + ' ' + appointment.AppointmentTime}</td>
-                  <td className="px-4 py-2">
-                    <button className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 mr-2">Complete</button>
-                    <button className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Cancel</button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="text-center py-4">No appointments scheduled.</td>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {appointments.map((appointment) => (
+              <tr key={appointment.AppointmentID}>
+                <td className="px-6 py-4 whitespace-nowrap">{appointment.pet_name}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{appointment.ServiceName}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{`${appointment.AppointmentDate} ${appointment.AppointmentTime}`}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    appointment.Status === 'Approved' ? 'bg-green-100 text-green-800' :
+                    appointment.Status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {appointment.Status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">{appointment.vet_name || 'Not assigned'}</td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
 
-      <button onClick={() => setIsModalOpen(true)} className="mb-6 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-        Add New Appointment
-      </button>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <h3 className="text-xl font-semibold mb-4">Add New Appointment</h3>
-            <form onSubmit={handleSubmit}>
+      {/* Appointment Request Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Request Appointment</h3>
+              <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <form onSubmit={submitAppointment}>
               <div className="mb-4">
-                <label className="block text-sm font-semibold mb-1">Client:</label>
+                <label className="block text-sm font-medium text-gray-700">Pet</label>
                 <select
-                  name="client"
-                  value={newAppointment.client}
-                  onChange={handleOwnerChange}
-                  required
-                  className="border border-gray-300 rounded p-2 w-full"
-                >
-                  <option value="" disabled>Select a Client</option>
-                  {owners && owners.map(owner => (
-                    <option key={owner.owner_id} value={owner.owner_id}>
-                      {owner.First_name + ' ' + owner.Last_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold mb-1">Pet:</label>
-                <select
-                  name="pet"
-                  value={newAppointment.pet}
+                  name="pet_id"
+                  value={newAppointment.pet_id}
                   onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                   required
-                  className="border border-gray-300 rounded p-2 w-full"
                 >
-                  <option value="" disabled>Select a Pet</option>
+                  <option value="">Select a pet</option>
                   {pets.map(pet => (
-                    <option key={pet.pet_id} value={pet.pet_id}>
-                      {pet.pet_name}
-                    </option>
+                    <option key={pet.pet_id} value={pet.pet_id}>{pet.pet_name}</option>
                   ))}
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-semibold mb-1">Vet:</label>
-                <input
-                  type="text"
-                  name="vet"
-                  value={newAppointment.vet}
+                <label className="block text-sm font-medium text-gray-700">Service</label>
+                <select
+                  name="ServiceID"
+                  value={newAppointment.ServiceID}
                   onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                   required
-                  className="border border-gray-300 rounded p-2 w-full"
-                />
+                >
+                  <option value="">Select a service</option>
+                  {services.map(service => (
+                    <option key={service.ServiceID} value={service.ServiceID}>{service.ServiceName}</option>
+                  ))}
+                </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-semibold mb-1">Service:</label>
-                <input
-                  type="text"
-                  name="service"
-                  value={newAppointment.service}
-                  onChange={handleInputChange}
-                  required
-                  className="border border-gray-300 rounded p-2 w-full"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold mb-1">Time:</label>
-                <input
-                  type="time"
-                  name="time"
-                  value={newAppointment.time}
-                  onChange={handleInputChange}
-                  required
-                  className="border border-gray-300 rounded p-2 w-full"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold mb-1">Date:</label>
+                <label className="block text-sm font-medium text-gray-700">Date</label>
                 <input
                   type="date"
-                  name="date"
-                  value={newAppointment.date}
+                  name="AppointmentDate"
+                  value={newAppointment.AppointmentDate}
                   onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                   required
-                  className="border border-gray-300 rounded p-2 w-full"
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-semibold mb-1">Reason for Visit:</label>
-                <textarea
-                  name="reason"
-                  value={newAppointment.reason}
+                <label className="block text-sm font-medium text-gray-700">Time</label>
+                <input
+                  type="time"
+                  name="AppointmentTime"
+                  value={newAppointment.AppointmentTime}
                   onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                   required
-                  className="border border-gray-300 rounded p-2 w-full"
                 />
               </div>
-              <div className="flex justify-end">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 mr-2">
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                  Add Appointment
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Reason for Visit</label>
+                <textarea
+                  name="ReasonForVisit"
+                  value={newAppointment.ReasonForVisit}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+              <div className="mt-6">
+                <button
+                  type="submit"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Submit Appointment Request
                 </button>
               </div>
             </form>

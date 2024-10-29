@@ -6,11 +6,12 @@ import HomeSection from './HomeSection';
 import PetsSection from './PetsSection';
 import OwnersSection from './OwnersSection';
 import VetsSection from './VetsSection';
-import ServicesSection from './ServicesSection'; // Update this line
+import ServicesSection from './ServicesSection';
 import AppointmentsSection from './AppointmentsSection';
 import ReportsSection from './ReportsSection';
 import SettingsSection from './SettingsSection';
 import AdoptionSection from './AdoptionSection';
+import HistorySection from './HistorySection';
 
 const AdminPage = () => {
   const [activeSection, setActiveSection] = useState('Home'); // State to manage active section
@@ -26,8 +27,8 @@ const AdminPage = () => {
         return <OwnersSection />;
       case 'Vets':
         return <VetsSection />;
-      case 'Services': // Update this line
-        return <ServicesSection />; // Update this line
+      case 'Services':
+        return <ServicesSection />;
       case 'Appointments':
         return <AppointmentsSection />;
       case 'Reports':
@@ -36,6 +37,8 @@ const AdminPage = () => {
         return <SettingsSection />;
       case 'Adoption':
         return <AdoptionSection />;
+      case 'History':
+        return <HistorySection />;
       default:
         return null;
     }

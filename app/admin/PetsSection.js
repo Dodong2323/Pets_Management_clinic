@@ -192,7 +192,7 @@ const PetsSection = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredPets && filteredPets.length > 0 ? (
+          {Array.isArray(filteredPets) && filteredPets.length > 0 ? (
             filteredPets.map((pet) => (
               <tr key={pet.pet_id}>
                 <td className="border border-gray-300 p-2">{pet.pet_name}</td>
@@ -218,9 +218,7 @@ const PetsSection = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="6" className="text-center border border-gray-300 p-2">
-                No pets found.
-              </td>
+              <td colSpan="7" className="border border-gray-300 p-2 text-center">No pets found</td>
             </tr>
           )}
         </tbody>
